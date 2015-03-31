@@ -1,6 +1,6 @@
 {
   "name": "make-gettext",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Translate using gettext your project inspired in makemessages from Django",
   "scripts": {
     "test": "test"
