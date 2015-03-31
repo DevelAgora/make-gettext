@@ -1,5 +1,7 @@
 # make-gettext - Makemessages with GNU Gettext
 
+[make-gettext Npm package](https://www.npmjs.com/package/make-gettext)
+
 The perfect solution to compile your application with GNU Gettext.
 
 Sometimes applications like PoEdit or EazyPo are not enought to extract all the messages from the source code. And using xgettext is not trivial and needs more than two commands.
@@ -31,7 +33,7 @@ Have a nice Gettext experience.
     require('make-gettext')
 
   As command:
-  
+
     make-gettext -l <locale> [options] 
 
   Options:

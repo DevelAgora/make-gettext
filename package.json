@@ -12,6 +12,10 @@
     "windows",
     "makemessages"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DevelAgora/make-gettext.git"
+  },
   "author": "Patricia Sara Juarez Muñoz (@ccsakuweb)",
   "license": "MIT",
   "devDependencies": {
