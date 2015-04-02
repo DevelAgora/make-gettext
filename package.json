@@ -1,6 +1,6 @@
 {
   "name": "make-gettext",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "description": "Translate using gettext your project inspired in makemessages from Django",
   "scripts": {
     "test": "test"
@@ -18,14 +18,16 @@
   },
   "author": "Patricia Sara Juarez Muñoz (@ccsakuweb)",
   "license": "MIT",
-  "devDependencies": {
+  "dependencies": {
     "commander": "^2.7.1",
+    "fast-csv": "^0.6.0",
     "po2json": "^0.4.1",
-    "underscore": "^1.8.2",
-    "walk": "^2.3.9",
-    "q": "~1.2.0"
+    "pofile": "^0.2.12",
+    "promise": "^6.1.0",
+    "q": "~1.2.0",
+    "walk": "^2.3.9"
   },
   "bin": {
-    "translate": "lib/cli.js"
+    "make-gettext": "lib/cli.js"
   }
 }

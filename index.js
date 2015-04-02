@@ -25,6 +25,7 @@ SOFTWARE.
 var config = {
   extensions: ['js', 'html'],
   outputdir: '.',
+  directory: '.',
   exclude: [],
   keyword: [],
   onSuccess: null
@@ -34,16 +35,15 @@ TranslateWithGettext = function (options) {
   var that = this;
 
   var po2json = require('po2json'),
+      po2csv = require('./lib/po2csv'),
       fs = require('fs'),
       Q = require('q'),
       exec = require('child_process').exec,
-      FilesWalker = require('./lib/filesWalker'),
-      _ = require('underscore');
+      FilesWalker = require('./lib/filesWalker');
 
 
-  options = _.extend({}, config, options);
+  options = extend({}, config, options);
 
-  debugger;
 
   if (!options.locale) {
     console.log("The option locale is required to start the translation.");
@@ -83,18 +83,30 @@ TranslateWithGettext = function (options) {
   function buildGettext () {
     var potFilePath = options.outputdir + '/' + options.locale + '.pot';
 
-    removePOTFile(potFilePath, function () {
+    removePOFile(potFilePath, function () {
 
       buildPOTFiles(that.filesWalker.filesByExtension, potFilePath, function () {
 
         var poFilePath = options.outputdir + '/' + options.locale + '.po';
         mergePOFile( poFilePath, potFilePath, function () {
 
-          if (options['no-obsolete']) 
-            editPOFile('--no-obsolete', function () {});
+          Q(function (resolve, reject, notify) {
+            if (options['no-obsolete']) 
+              editPOFile('--no-obsolete', function () {
+                resolve();
+              });
+            else
+              resolve();
+          })
+          .then(function () {
+            buildJSONFile(poFilePath);
+          })
+          .then(function (){
+            buildToTranslateFiles(poFilePath);
+          });
 
           if (!options['keep-pot'])
-            removePOTFile(potFilePath);
+            removePOFile(potFilePath);
           
           console.log("The make gettext messages task succeded.");
 
@@ -178,6 +190,7 @@ TranslateWithGettext = function (options) {
   }
 
   function editPOFile (opts, onSuccess, outputPath, inputPath) {
+    debugger;
     var opts = opts || '';
     outputPath = outputPath || poFilePath;
     inputPath = inputPath || poFilePath;    
@@ -186,11 +199,48 @@ TranslateWithGettext = function (options) {
     executeCommand ('msgattrib ' + opts + ' ' + inputPath, onSuccess, onSuccess); 
   }
 
-  function removePOTFile (potFilePath, onSuccess) {
+  function removePOFile (potFilePath, onSuccess) {
       exec('rm -f ' + potFilePath, function () {
-        if(onSuccess)
+        if (onSuccess)
           onSuccess();
       });
+  }
+
+  function buildJSONFile (poFilePath) {
+    debugger;
+    if (options.toJson) {
+      po2json.parseFile(poFilePath, {
+        stringify: true
+      }, function (err, dataStr) {
+        debugger;
+        if (err !== null)
+          console.log("Error while generating JSON file: " + err);
+        else {
+          var jsonOutput = options.outputdir + '/' + options.locale + '.json';
+          fs.writeFile(jsonOutput, dataStr, function (err, written, string) {
+              if (err !== null)
+                console.log("Error while saving the JSON file: " + err);
+          });
+        }
+      });
+    }
+  }
+
+  function buildToTranslateFiles (poFilePath) {
+    debugger;
+    if (options.toTranslatePo || options.toTranslateCsv) {
+      var toTranslatePoFile = options.outputdir + '/' + options.locale + 'TRANS.po';
+      editPOFile('--untranslated', function () {
+        debugger;
+        if (options.toTranslateCsv) {
+          var toTranslateCSVFile = options.outputdir + '/' + options.locale + 'TRANS.csv';
+          po2csv.createCSVFileFromPo(toTranslatePoFile, toTranslateCSVFile, function () {
+            if (!options.toTranslatePo)
+              removePOFile(toTranslatePoFile);
+          });
+        }
+      }, toTranslatePoFile, poFilePath);
+    }
   }
 
   function executeCommand (command, onSuccess, onError) {
@@ -206,7 +256,17 @@ TranslateWithGettext = function (options) {
           onSuccess();
       }
     }); 
+  }
 
+  function extend () {
+    if (!arguments.length)
+      return;
+    var e = arguments[0];
+    for (var i=0, len=arguments.length; i<len; i++) {
+      var o = arguments[i];
+      for (var key in arguments[i]) e[key] = o[key];
+    }
+    return e;
   }
 
   function validateOutputDir (outputdir, onSuccess, index) {
@@ -215,7 +275,7 @@ TranslateWithGettext = function (options) {
     
     fs.readdir(paths.slice(0,index+1).join('\\'), function(error, files) {
       if(error !== null) {
-        //No existe el directorio que se ha intentado abrir
+        //Do not exist the dir that it tried to open
         fs.mkdirSync(paths.slice(0,index+1).join('\\'));
       }
       if(index < paths.length - 1)
